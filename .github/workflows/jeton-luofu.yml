@@ -1,4 +1,4 @@
-name: Build Jeton HiSilicon Luofu 22.03.6
+name: Build Jeton Luofu 22.03.6
 on:
   workflow_dispatch:
     inputs:
@@ -22,19 +22,36 @@ on:
         type: string
         required: true
         default: "luofu"
-      openwrt_vermagic:
-        description: "OpenWrt vermagic"
-        type: string
-        required: true
-        default: "da6486455e124a3f311d4af8607340d4"
 
 jobs:
-  node:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-22.04
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Build Info
+    - uses: actions/checkout@v4
+    
+    - name: Clone OpenWrt 22.03.6
       run: |
-        echo "Building OpenWrt ${{ github.event.inputs.openwrt_version }}"
-        echo "Target: ${{ github.event.inputs.openwrt_target }}/${{ github.event.inputs.openwrt_subtarget }}"
+        git clone https://git.openwrt.org/openwrt/openwrt.git -b v22.03.6
+        cd openwrt
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a luci-app-wireguard luci-app-vpn-policy-routing
+        
+    - name: Configure for Jeton AX3000 Core
+      run: |
+        cd openwrt
+        echo "CONFIG_TARGET_hisilicon=y" >> .config
+        echo "CONFIG_TARGET_hisilicon_luofu=y" >> .config
+        echo "CONFIG_PACKAGE_luci-app-vpn-policy-routing=y" >> .config
+        echo "CONFIG_PACKAGE_wireguard-tools=y" >> .config
+        make defconfig
+        
+    - name: Build firmware
+      run: |
+        cd openwrt
+        make -j$(nproc) V=s
+        
+    - name: Upload firmware
+      uses: actions/upload-artifact@v4
+      with:
+        name: jeton-ax3000-luofu-22.03.6
+        path: openwrt/bin/targets/hisilicon/luofu/*.bin
