@@ -1,24 +1,40 @@
-name: Build Jeton Luofu 22.03.6
-on: [workflow_dispatch]
+name: Build Jeton HiSilicon Luofu 22.03.6
+on:
+  workflow_dispatch:
+    inputs:
+      openwrt_version:
+        description: "OpenWrt version"
+        type: string
+        required: true
+        default: "22.03.6"
+      openwrt_arch:
+        description: "OpenWrt arch"
+        type: string
+        required: true
+        default: "arm_cortex-a9"
+      openwrt_target:
+        description: "OpenWrt target"
+        type: string
+        required: true
+        default: "hisilicon"
+      openwrt_subtarget:
+        description: "OpenWrt subtarget"
+        type: string
+        required: true
+        default: "luofu"
+      openwrt_vermagic:
+        description: "OpenWrt vermagic"
+        type: string
+        required: true
+        default: "da6486455e124a3f311d4af8607340d4"
+
 jobs:
-  build:
-    runs-on: ubuntu-22.04
+  node:
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Checkout OpenWrt 22.03.6
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Build Info
       run: |
-        git clone https://git.openwrt.org/openwrt/openwrt.git -b v22.03.6 openwrt
-        cd openwrt
-        ./scripts/feeds update -a
-        ./scripts/feeds install luci-app-wireguard luci-app-vpn-policy-routing
-        echo "CONFIG_TARGET_hisilicon=y" >> .config
-        echo "CONFIG_TARGET_hisilicon_luofu=y" >> .config
-        make defconfig
-    - name: Build
-      run: |
-        cd openwrt
-        make -j$(nproc) V=s
-    - uses: actions/upload-artifact@v4
-      with:
-        name: jeton-luofu-22.03.6
-        path: openwrt/bin/targets/hisilicon/luofu/*.bin
+        echo "Building OpenWrt ${{ github.event.inputs.openwrt_version }}"
+        echo "Target: ${{ github.event.inputs.openwrt_target }}/${{ github.event.inputs.openwrt_subtarget }}"
