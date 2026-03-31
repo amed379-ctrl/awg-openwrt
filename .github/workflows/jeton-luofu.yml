@@ -1,0 +1,40 @@
+name: Build Jeton HiSilicon Luofu 22.03.6
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'OpenWrt version'
+        required: true
+        default: '22.03.6'
+      arch:
+        description: 'OpenWrt arch'
+        required: true
+        default: 'arm_cortex-a9'
+      target:
+        description: 'OpenWrt target'
+        required: true
+        default: 'hisilicon'
+      subtarget:
+        description: 'OpenWrt subtarget'
+        required: true
+        default: 'luofu'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Build OpenWrt for Jeton
+      uses: P3TERX/action-openwrt@main
+      with:
+        openwrt_branch: 'openwrt-22.03'
+        target: ${{ github.event.inputs.target }}
+        subtarget: ${{ github.event.inputs.subtarget }}
+        file_ext: '.bin'
+        vermagic: 'da6486455e124a3f311d4af8607340d4'
+        
+    - name: Upload firmware
+      uses: actions/upload-artifact@v4
+      with:
+        name: jeton-ax3000-core-22.03.6-luofu
